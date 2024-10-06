@@ -1,19 +1,19 @@
 [tool.poetry]
-name = "python-tool-template"
+name = "google-calendar-tool"
 version = "0.1.0"
 description = "A template repository for building tools in Python"
 readme = "README.md"
 authors = ["Luc Shelton <lucshelton@gmail.com>"]
-homepage = "https://github.com/loveduckie/python-tool-template"
-repository = "https://github.com/loveduckie/python-tool-template"
-documentation = "https://github.com/loveduckie/python-tool-template/-/wikis/home"
+homepage = "https://github.com/loveduckie/google-calendar-tool"
+repository = "https://github.com/loveduckie/google-calendar-tool"
+documentation = "https://github.com/loveduckie/google-calendar-tool/-/wikis/home"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
 ]
 packages = [
-    { include = "python_tool_template" },
-    { include = "python_tool_template_tests" }
+    { include = "google_calendar_tool" },
+    { include = "google_calendar_tool_tests" }
 ]
 
 [tool.poetry.dependencies]
@@ -21,10 +21,13 @@ python = "^3.11"
 rich = "^13.8.1"
 rich-click = "^1.8.3"
 click = "^8.1.7"
+google-api-python-client = "^2.147.0"
+oauth2client = "^4.1.3"
+google-auth-oauthlib = "^1.2.1"
 
 
 [tool.poetry.scripts]
-python-tool-template = 'python_tool_template.__main__:cli'
+gcal-tool = 'google_calendar_tool.__main__:cli'
 
 [tool.black]
 line-length = 100
