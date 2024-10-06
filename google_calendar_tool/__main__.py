@@ -12,6 +12,8 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
+BUFFER_MINUTES = 30
+
 
 @click.group(help="The base command-line interface for the tool.")
 @click.pass_context
@@ -28,13 +30,26 @@ def cli(context: click.Context) -> None:
 @cli.command("generate", help="Generate the availability list.")
 @click.option("--credentials-filepath", type=str, default=os.path.join(os.getcwd(), "credentials.json"),
               help="The path to where the API credentials are stored.")
+@click.option("--output-type", type=click.Choice(['default', 'json']), default="default",
+              help="The path to where the API credentials are stored.")
+@click.option("--buffer-minutes", type=int, default=BUFFER_MINUTES,
+              help="The path to where the API credentials are stored.")
 @click.pass_context
-def cli_generate(context: click.Context, credentials_filepath: str) -> None:
+def cli_generate(context: click.Context, credentials_filepath: str, output_type: str, buffer_minutes: int) -> None:
     """
+    :param buffer_minutes: The buffer in minutes before and after.
+    :param output_type: The type of output to generate.
     :param context: The context object which holds state of the CLI.
     :param credentials_filepath: The path to where the API credentials are stored.
     :return: None
     """
+    if not context:
+        raise ValueError("The context is invalid or null")
+    if not output_type:
+        raise ValueError("The output type is invalid or null")
+
+    if not buffer_minutes:
+        raise ValueError("The buffer minutes is invalid or null")
     service = authenticate_google_calendar(credentials_filepath)
     start_of_week = datetime.datetime.now(datetime.timezone.utc)
     end_of_week = start_of_week + datetime.timedelta(days=7)
@@ -74,7 +89,13 @@ def authenticate_google_calendar(credentials_filepath: str = os.path.join(os.get
 
     return build('calendar', 'v3', credentials=credentials)
 
-BUFFER_MINUTES = 30
+
+def format_date_with_ordinal(date):
+    """Format a datetime object with the day including an ordinal suffix."""
+    day = date.day
+    suffix = "th" if 10 <= day % 100 <= 20 else {1: "st", 2: "nd", 3: "rd"}.get(day % 10, "th")
+    return date.strftime(f"%A, %B {day}{suffix}")
+
 
 def get_free_slots(service, start_date, end_date):
     """
@@ -86,9 +107,12 @@ def get_free_slots(service, start_date, end_date):
     working_days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
     current_date = start_date
 
+    available_times = []
+
     # Iterate through each working day
     while current_date <= end_date:
         if current_date.strftime('%A') in working_days:
+            current_date_formatted = format_date_with_ordinal(current_date)
             # Set datetime to be timezone-aware (UTC)
             day_start_dt = current_date.replace(hour=0, minute=0, second=0, microsecond=0,
                                                 tzinfo=datetime.timezone.utc).isoformat()
@@ -103,7 +127,7 @@ def get_free_slots(service, start_date, end_date):
                                                   orderBy='startTime').execute()
             events: list = events_result.get('items', [])
 
-            print(f"Availability for {current_date.strftime('%A, %B %d')}:")
+            print(f"Availability for {format_date_with_ordinal(current_date)}:")
 
             # If there are no events
             if not events:
@@ -121,6 +145,7 @@ def get_free_slots(service, start_date, end_date):
                     end_dt = datetime.datetime.fromisoformat(end)
 
                     if available_start_dt < start_dt:
+                        available_times.append((current_date_formatted, available_start_dt, start_dt))
                         print(f" - Available: {available_start_dt.strftime('%H:%M')} to {start_dt.strftime('%H:%M')}")
 
                     # Set the next available start time after the current event with the buffer
@@ -129,11 +154,15 @@ def get_free_slots(service, start_date, end_date):
                 # Check for availability at the end of the day
                 day_end_time_dt = datetime.datetime.fromisoformat(day_end_dt)
                 if available_start_dt < day_end_time_dt:
-                    print(f" - Available: {available_start_dt.strftime('%H:%M')} to {day_end_time_dt.strftime('%H:%M')}")
+                    available_times.append((current_date_formatted, available_start_dt, day_end_time_dt))
+                    print(
+                        f" - Available: {available_start_dt.strftime('%H:%M')} to {day_end_time_dt.strftime('%H:%M')}")
 
             print()  # Blank line for better readability
 
         current_date += datetime.timedelta(days=1)
+
+    return available_times
 
 
 if __name__ == "__main__":
