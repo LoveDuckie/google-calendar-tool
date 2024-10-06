@@ -95,8 +95,6 @@ def get_free_slots(service, start_date, end_date):
             day_end_dt = current_date.replace(hour=23, minute=59, second=59, microsecond=0,
                                               tzinfo=datetime.timezone.utc).isoformat()
 
-            print(f"Requesting events from {day_start_dt} to {day_end_dt}")
-
             events_result = service.events().list(calendarId='primary',
                                                   # 'primary' refers to the main calendar of the authenticated user
                                                   timeMin=day_start_dt,
