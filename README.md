@@ -1,6 +1,18 @@
+<div align="center">
+
 # Google Calendar Availability Tool
 
+</div>
+
 This tool allows you to generate a list of available time slots in your Google Calendar for the upcoming week. It integrates with the Google Calendar API to fetch events and compute free slots within working hours. The tool uses `rich_click` to provide a command-line interface.
+
+## Demonstration
+
+<div align="center">
+
+![google-calendar-tool demonstration](assets/gcaltool.gif)
+
+</div>
 
 ## Installation
 
