@@ -28,19 +28,26 @@ def cli(context: click.Context) -> None:
 
 
 @cli.command("generate", help="Generate the availability list.")
-@click.option("--credentials-filepath", type=str, default=os.path.join(os.getcwd(), "credentials.json"),
-              help="The path to where the API credentials are stored.")
 @click.option("--output-type", type=click.Choice(['default', 'json']), default="default",
               help="The path to where the API credentials are stored.")
 @click.option("--buffer-minutes", type=int, default=BUFFER_MINUTES,
               help="The path to where the API credentials are stored.")
+@click.option("--hour-start", type=int, default=9,
+              help="The time of day that availability should start.")
+@click.option("--hour-end", type=int, default=6,
+              help="The time of day that availability should end.")
+@click.option("--credentials-filepath", type=str, default=os.path.join(os.getcwd(), "credentials.json"),
+              help="The path to where the API credentials are stored.")
 @click.pass_context
-def cli_generate(context: click.Context, credentials_filepath: str, output_type: str, buffer_minutes: int) -> None:
+def cli_generate(context: click.Context, credentials_filepath: str, output_type: str, buffer_minutes: int,
+                 hour_start: int, hour_end: int) -> None:
     """
-    :param buffer_minutes: The buffer in minutes before and after.
-    :param output_type: The type of output to generate.
-    :param context: The context object which holds state of the CLI.
-    :param credentials_filepath: The path to where the API credentials are stored.
+    :param context: The Click context object, which holds state information about the CLI runtime environment.
+    :param credentials_filepath: The path to the file where Google API credentials are stored.
+    :param output_type: Determines the format in which the availability list should be output; options are 'default' or 'json'.
+    :param buffer_minutes: The number of buffer minutes that should be considered between available slots.
+    :param hour_start: The starting hour of the day from which to generate availability.
+    :param hour_end: The ending hour of the day up to which to generate availability.
     :return: None
     """
     if not context:
@@ -63,6 +70,7 @@ SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
 
 def authenticate_google_calendar(credentials_filepath: str = os.path.join(os.getcwd(), "credentials.json")):
     """
+    Authenticate the Google Calendar API.
     :param credentials_filepath: The file path to the Google API credentials JSON file.
     :return: An authorized Google Calendar API service instance.
     """
@@ -91,7 +99,11 @@ def authenticate_google_calendar(credentials_filepath: str = os.path.join(os.get
 
 
 def format_date_with_ordinal(date):
-    """Format a datetime object with the day including an ordinal suffix."""
+    """
+    Format the datetime object with an ordinal suffix for the day.
+    :param date: The date object to be formatted.
+    :return: A string representing the formatted date with an ordinal suffix for the day.
+    """
     day = date.day
     suffix = "th" if 10 <= day % 100 <= 20 else {1: "st", 2: "nd", 3: "rd"}.get(day % 10, "th")
     return date.strftime(f"%A, %B {day}{suffix}")
@@ -114,10 +126,14 @@ def get_free_slots(service, start_date, end_date):
         if current_date.strftime('%A') in working_days:
             current_date_formatted = format_date_with_ordinal(current_date)
             # Set datetime to be timezone-aware (UTC)
-            day_start_dt = current_date.replace(hour=0, minute=0, second=0, microsecond=0,
+            day_start_dt = current_date.replace(hour=9, minute=0, second=0, microsecond=0,
                                                 tzinfo=datetime.timezone.utc).isoformat()
-            day_end_dt = current_date.replace(hour=23, minute=59, second=59, microsecond=0,
+            # day_start_dt = current_date.replace(hour=0, minute=0, second=0, microsecond=0,
+            #                                     tzinfo=datetime.timezone.utc).isoformat()
+            day_end_dt = current_date.replace(hour=18, minute=0, second=0, microsecond=0,
                                               tzinfo=datetime.timezone.utc).isoformat()
+            # day_end_dt = current_date.replace(hour=23, minute=59, second=59, microsecond=0,
+            #                                   tzinfo=datetime.timezone.utc).isoformat()
 
             events_result = service.events().list(calendarId='primary',
                                                   # 'primary' refers to the main calendar of the authenticated user
@@ -127,7 +143,7 @@ def get_free_slots(service, start_date, end_date):
                                                   orderBy='startTime').execute()
             events: list = events_result.get('items', [])
 
-            print(f"Availability for {format_date_with_ordinal(current_date)}:")
+            print(f"{format_date_with_ordinal(current_date)}:")
 
             # If there are no events
             if not events:
