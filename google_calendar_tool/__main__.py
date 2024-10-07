@@ -27,6 +27,13 @@ def cli(context: click.Context) -> None:
         raise ValueError("The context is invalid or null")
 
 
+@cli.command("authenticate", help="Generate the availability list.")
+def cli_authenticate(context: click.Context) -> None:
+    if not context:
+        raise ValueError("The context is invalid or null")
+    return
+
+
 @cli.command("generate", help="Generate the availability list.")
 @click.option("--output-type", type=click.Choice(['default', 'json']), default="default",
               help="The path to where the API credentials are stored.")
@@ -98,7 +105,7 @@ def authenticate_google_calendar(credentials_filepath: str = os.path.join(os.get
     return build('calendar', 'v3', credentials=credentials)
 
 
-def format_date_with_ordinal(date):
+def format_date_with_ordinal(date) -> str:
     """
     Format the datetime object with an ordinal suffix for the day.
     :param date: The date object to be formatted.
@@ -125,20 +132,19 @@ def get_free_slots(service, start_date, end_date):
     while current_date <= end_date:
         if current_date.strftime('%A') in working_days:
             current_date_formatted = format_date_with_ordinal(current_date)
+
             # Set datetime to be timezone-aware (UTC)
-            day_start_dt = current_date.replace(hour=9, minute=0, second=0, microsecond=0,
-                                                tzinfo=datetime.timezone.utc).isoformat()
-            # day_start_dt = current_date.replace(hour=0, minute=0, second=0, microsecond=0,
-            #                                     tzinfo=datetime.timezone.utc).isoformat()
-            day_end_dt = current_date.replace(hour=18, minute=0, second=0, microsecond=0,
-                                              tzinfo=datetime.timezone.utc).isoformat()
-            # day_end_dt = current_date.replace(hour=23, minute=59, second=59, microsecond=0,
-            #                                   tzinfo=datetime.timezone.utc).isoformat()
+            day_start = current_date.replace(hour=9, minute=0, second=0, microsecond=0,
+                                             tzinfo=datetime.timezone.utc).isoformat()
+            day_end = current_date.replace(hour=18, minute=0, second=0, microsecond=0,
+                                           tzinfo=datetime.timezone.utc).isoformat()
+
+            day_end_time_dt = datetime.datetime.fromisoformat(day_end)
 
             events_result = service.events().list(calendarId='primary',
                                                   # 'primary' refers to the main calendar of the authenticated user
-                                                  timeMin=day_start_dt,
-                                                  timeMax=day_end_dt,
+                                                  timeMin=day_start,
+                                                  timeMax=day_end,
                                                   singleEvents=True,
                                                   orderBy='startTime').execute()
             events: list = events_result.get('items', [])
@@ -149,26 +155,31 @@ def get_free_slots(service, start_date, end_date):
             if not events:
                 print(" - All day available")
             else:
-                available_start_dt = datetime.datetime.fromisoformat(day_start_dt)
+                available_start_dt = datetime.datetime.fromisoformat(day_start).replace(tzinfo=datetime.timezone.utc)
 
                 # Iterate through events to determine free slots
                 for event in events:
                     if 'dateTime' not in event['start']:
                         continue
-                    start = event['start'].get('dateTime', event['start'].get('date'))
-                    end = event['end'].get('dateTime', event['end'].get('date'))
-                    start_dt = datetime.datetime.fromisoformat(start) - datetime.timedelta(minutes=BUFFER_MINUTES)
-                    end_dt = datetime.datetime.fromisoformat(end)
 
-                    if available_start_dt < start_dt:
-                        available_times.append((current_date_formatted, available_start_dt, start_dt))
-                        print(f" - Available: {available_start_dt.strftime('%H:%M')} to {start_dt.strftime('%H:%M')}")
+                    event_start = event['start'].get('dateTime', event['start'].get('date'))
+                    event_end = event['end'].get('dateTime', event['end'].get('date'))
+
+                    event_start_dt = datetime.datetime.fromisoformat(event_start).replace(tzinfo=datetime.timezone.utc) - datetime.timedelta(
+                        minutes=BUFFER_MINUTES)
+                    event_end_dt = datetime.datetime.fromisoformat(event_end).replace(tzinfo=datetime.timezone.utc)
+
+                    if available_start_dt < event_start_dt:
+                        available_times.append((current_date_formatted, available_start_dt, event_start_dt))
+                        print(
+                            f" - Available: {available_start_dt.strftime('%H:%M')} to {event_start_dt.strftime('%H:%M')}")
 
                     # Set the next available start time after the current event with the buffer
-                    available_start_dt = end_dt + datetime.timedelta(minutes=BUFFER_MINUTES)
+                    available_start_dt = event_end_dt + datetime.timedelta(minutes=BUFFER_MINUTES)
+
 
                 # Check for availability at the end of the day
-                day_end_time_dt = datetime.datetime.fromisoformat(day_end_dt)
+
                 if available_start_dt < day_end_time_dt:
                     available_times.append((current_date_formatted, available_start_dt, day_end_time_dt))
                     print(
@@ -185,4 +196,4 @@ if __name__ == "__main__":
     try:
         cli()
     except Exception as exc:
-        pass
+        print(f"An error occurred: {exc}")
