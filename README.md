@@ -6,7 +6,11 @@
 
 This tool allows you to generate a list of available time slots in your Google Calendar for the upcoming week. It integrates with the Google Calendar API to fetch events and compute free slots within working hours. The tool uses `rich_click` to provide a command-line interface.
 
-It might do other things in the future but it was originally developed to do one thing. This was created in a couple of hours so please temper your expectations around code-quality and any potential issues that you might find.
+It might do other things in the future but it was originally developed to do one thing and to do it well.
+
+---
+
+:warning: **NOTE:** :warning:  This was created in a couple of hours so please temper your expectations around code-quality and any potential issues that you might find.
 
 ## Demonstration
 
