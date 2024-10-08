@@ -10,7 +10,7 @@ This tool allows you to generate a list of available time slots in your Google C
 
 <div align="center">
 
-![google-calendar-tool demonstration](assets/gcaltool.gif)
+![google-calendar-tool demonstration](<assets/gcal-tool-generate.gif>)
 
 </div>
 
@@ -19,7 +19,7 @@ This tool allows you to generate a list of available time slots in your Google C
 1. Clone the repository:
 
    ```sh
-   #!/bin/bash
+   #!/usr/bin/env bash
    git clone https://github.com/LoveDuckie/google-calendar-tool
    cd google-calendar-tool
    ```
@@ -27,7 +27,7 @@ This tool allows you to generate a list of available time slots in your Google C
 2. Install the package:
 
    ```sh
-   #!/bin/bash
+   #!/usr/bin/env bash
    pip install .
    ```
 
@@ -40,7 +40,7 @@ This tool allows you to generate a list of available time slots in your Google C
 The tool provides a command-line command to generate a list of availability slots from your Google Calendar. 
 
 ```sh
-#!/bin/bash
+#!/usr/bin/env bash
 gcal-tool generate [OPTIONS]
 ```
 
@@ -62,7 +62,7 @@ gcal-tool generate [OPTIONS]
 To generate your availability using a custom credentials file and in JSON format:
 
 ```sh
-#!/bin/bash
+#!/usr/bin/env bash
 gcal-tool generate --credentials-filepath "/path/to/credentials.json" --output-type "json"
 ```
 
@@ -97,7 +97,7 @@ Availability for Monday, October 7th:
 You can install these dependencies using:
 
 ```sh
-#!/bin/bash
+#!/usr/bin/env bash
 pip install -r requirements.txt
 ```
 
