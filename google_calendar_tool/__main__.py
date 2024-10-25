@@ -5,6 +5,7 @@ from __future__ import print_function
 
 import datetime
 import os.path
+from multiprocessing.managers import Value
 
 import rich_click as click
 from google.auth.transport.requests import Request
@@ -74,6 +75,17 @@ def cli_generate(context: click.Context, credentials_filepath: str, output_type:
 # If modifying these SCOPES, delete the file token.json
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
 
+def format_timerange(time_start: datetime.datetime, time_end: datetime.datetime) -> str:
+    """
+    Format the time range
+    """
+    if not time_start:
+        raise ValueError("The time start is invalid or null")
+
+    if not time_end:
+        raise ValueError("The time end is invalid or null")
+
+
 
 def authenticate_google_calendar(credentials_filepath: str = os.path.join(os.getcwd(), "credentials.json")):
     """
@@ -131,6 +143,7 @@ def get_free_slots(service, start_date, end_date):
     # Iterate through each working day
     while current_date <= end_date:
         if current_date.strftime('%A') in working_days:
+            times_slots = []
             current_date_formatted = format_date_with_ordinal(current_date)
 
             # Set datetime to be timezone-aware (UTC)
