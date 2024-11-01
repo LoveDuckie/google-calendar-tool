@@ -5,8 +5,9 @@ from __future__ import print_function
 
 import datetime
 import os.path
-from multiprocessing.managers import Value
+import google.auth.exceptions
 
+import google
 import rich_click as click
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -93,28 +94,38 @@ def authenticate_google_calendar(credentials_filepath: str = os.path.join(os.get
     :param credentials_filepath: The file path to the Google API credentials JSON file.
     :return: An authorized Google Calendar API service instance.
     """
-    credentials = None
+    token_credentials = None
     # Check if token.json exists (user authentication data)
     token_filepath = os.path.join(os.getcwd(), 'token.json')
+
     if os.path.exists(token_filepath):
         with open(token_filepath, 'rb') as token:
-            credentials = Credentials.from_authorized_user_file(token_filepath, SCOPES)
+            token_credentials = Credentials.from_authorized_user_file(token_filepath, SCOPES)
 
     # If there are no valid credentials, authenticate again
-    if not credentials or not credentials.valid:
-        if credentials and credentials.expired and credentials.refresh_token:
-            credentials.refresh(Request())
-        else:
-            if not credentials_filepath:
-                raise ValueError("The credentials file path was not defined. Unable to continue.")
-            flow = InstalledAppFlow.from_client_secrets_file(credentials_filepath, SCOPES)
-            credentials = flow.run_local_server(port=0)
+    if not token_credentials or not token_credentials.valid:
+        try:
+            if token_credentials and token_credentials.expired and token_credentials.refresh_token:
+                token_credentials.refresh(Request())
+        except google.auth.exceptions.RefreshError:
+            os.remove(token_filepath)
+
+        if not credentials_filepath:
+            raise ValueError("The credentials file path was not defined. Unable to continue.")
+        if not os.path.exists(credentials_filepath):
+            raise FileNotFoundError(f"The credentials file at \"{credentials_filepath}\" does not exist.")
+
+        flow = InstalledAppFlow.from_client_secrets_file(credentials_filepath, SCOPES)
+        if not flow:
+            raise ValueError("The flow is invalid or null.")
+
+        token_credentials = flow.run_local_server(port=0)
 
         # Save the credentials for the next run
-        with open('token.json', 'w') as token:
-            token.write(credentials.to_json())
+        with open(token_filepath, 'w') as token:
+            token.write(token_credentials.to_json())
 
-    return build('calendar', 'v3', credentials=credentials)
+    return build('calendar', 'v3', credentials=token_credentials)
 
 
 def format_date_with_ordinal(date) -> str:
