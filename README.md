@@ -10,7 +10,21 @@ It might do other things in the future but it was originally developed to do one
 
 ---
 
-:warning: **NOTE:** :warning:  This was created in a couple of hours so please temper your expectations around code-quality and any potential issues that you might find.
+:warning: **NOTE:** :warning:  This was created in a couple of hours so please moderate your expectations around code-quality and any potential issues that you might find.
+
+## Why?
+
+This tool was built to answer the age-old question often asked by recruiters and employers when scheduling job interviews.
+
+> "What's your availability like?"
+
+Instead of laboriously formatting and reading my calendar for the following week, I thought it would instead be more appropriate to use a tool that would automate it for me.
+
+### Why not use a calendar scheduling tool, like Calendly?
+
+Surprisingly, some recruiters or employers don't like to use them or they would rather use their own in-house solution instead. This tool is meant to specifically solve instances where this problem might occur.
+
+Using this tool offers convenience and saves time for the prospective employer and the candidate (presumably you, the person reading this).
 
 ## Demonstration
 
@@ -19,6 +33,11 @@ It might do other things in the future but it was originally developed to do one
 ![google-calendar-tool demonstration](<assets/gcal-tool-generate.gif>)
 
 </div>
+
+## Requirements
+
+1. An account with Google Cloud Platform.
+2. OAuth2 access to the account with the calendar.
 
 ## Installation
 

@@ -19,7 +19,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.x'  # Specify the Python version you need
+          python-version: '3.11.4'
 
       - name: Install dependencies
         run: |
@@ -31,7 +31,7 @@ jobs:
           cd google_calendar_tool
           coverage run -m unittest discover -s tests -p "*.py"
           coverage report -m
-        continue-on-error: false  # Stop the workflow if tests fail
+        continue-on-error: false
 
       - name: Upload coverage report as artifact
         if: success()

@@ -76,6 +76,7 @@ def cli_generate(context: click.Context, credentials_filepath: str, output_type:
 # If modifying these SCOPES, delete the file token.json
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
 
+
 def format_timerange(time_start: datetime.datetime, time_end: datetime.datetime) -> str:
     """
     Format the time range
@@ -85,7 +86,6 @@ def format_timerange(time_start: datetime.datetime, time_end: datetime.datetime)
 
     if not time_end:
         raise ValueError("The time end is invalid or null")
-
 
 
 def authenticate_google_calendar(credentials_filepath: str = os.path.join(os.getcwd(), "credentials.json")):
@@ -189,7 +189,8 @@ def get_free_slots(service, start_date, end_date):
                     event_start = event['start'].get('dateTime', event['start'].get('date'))
                     event_end = event['end'].get('dateTime', event['end'].get('date'))
 
-                    event_start_dt = datetime.datetime.fromisoformat(event_start).replace(tzinfo=datetime.timezone.utc) - datetime.timedelta(
+                    event_start_dt = datetime.datetime.fromisoformat(event_start).replace(
+                        tzinfo=datetime.timezone.utc) - datetime.timedelta(
                         minutes=BUFFER_MINUTES)
                     event_end_dt = datetime.datetime.fromisoformat(event_end).replace(tzinfo=datetime.timezone.utc)
 
@@ -200,7 +201,6 @@ def get_free_slots(service, start_date, end_date):
 
                     # Set the next available start time after the current event with the buffer
                     available_start_dt = event_end_dt + datetime.timedelta(minutes=BUFFER_MINUTES)
-
 
                 # Check for availability at the end of the day
 

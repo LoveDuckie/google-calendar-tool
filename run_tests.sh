@@ -16,10 +16,18 @@ write_header
 # Run the tests with coverage
 write_info "Running unit tests with coverage"
 coverage run -m unittest discover -s google_calendar_tool_tests -p "*.py" || { echo "Tests failed"; exit 1; }
+if ! write_response "run_lint" "Run Coverage: Unit tests"; then
+   write_error "run_lint" "Failed: Unable to run unit tests."
+   exit 1
+fi
 
 # Generate the coverage report
 write_info "Generating coverage report"
 coverage report -m
+if ! write_response "run_lint" "Run Coverage: Report"; then
+   write_error "run_lint" "Failed: Unable to generate report from unit tests."
+   exit 2
+fi
 
 # Optional: Generate HTML report for detailed analysis
 coverage html
