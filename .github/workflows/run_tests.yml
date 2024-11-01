@@ -28,6 +28,7 @@ jobs:
 
       - name: Run unit tests with coverage
         run: |
+          pip install -e ./
           coverage run -m unittest discover -s google_calendar_tool_tests -p "*.py"
           coverage report -m
         continue-on-error: false
@@ -37,12 +38,11 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: coverage-report
-          path: google_calendar_tool/htmlcov
+          path: htmlcov
 
       - name: Generate HTML coverage report
         if: success()
         run: |
-          cd google_calendar_tool
           coverage html
 
       - name: Upload HTML coverage report as artifact
@@ -50,4 +50,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: html-coverage-report
-          path: google_calendar_tool/htmlcov
+          path: htmlcov
