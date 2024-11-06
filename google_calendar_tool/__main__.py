@@ -21,9 +21,8 @@ BUFFER_MINUTES = 30
 @click.pass_context
 def cli(context: click.Context) -> None:
     """
-
-    :param context:
-    :return:
+    :param context: The Click context object that holds information about the command execution environment
+    :return: None
     """
     if not context:
         raise ValueError("The context is invalid or null")
@@ -77,15 +76,17 @@ def cli_generate(context: click.Context, credentials_filepath: str, output_type:
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
 
 
-def format_timerange(time_start: datetime.datetime, time_end: datetime.datetime) -> str:
+def format_timerange(time_start: datetime.datetime, time_end: datetime.datetime) -> str | None:
     """
     Format the time range
     """
-    if not time_start:
+    if not time_start or not isinstance(time_start, datetime.datetime):
         raise ValueError("The time start is invalid or null")
 
-    if not time_end:
+    if not time_end or not isinstance(time_end, datetime.datetime):
         raise ValueError("The time end is invalid or null")
+
+    return None
 
 
 def authenticate_google_calendar(credentials_filepath: str = os.path.join(os.getcwd(), "credentials.json")):
@@ -94,34 +95,32 @@ def authenticate_google_calendar(credentials_filepath: str = os.path.join(os.get
     :param credentials_filepath: The file path to the Google API credentials JSON file.
     :return: An authorized Google Calendar API service instance.
     """
-    token_credentials = None
-    # Check if token.json exists (user authentication data)
     token_filepath = os.path.join(os.getcwd(), 'token.json')
+    token_credentials = None
 
+    # Check if token.json exists (user authentication data)
     if os.path.exists(token_filepath):
-        with open(token_filepath, 'rb') as token:
-            token_credentials = Credentials.from_authorized_user_file(token_filepath, SCOPES)
+        token_credentials = Credentials.from_authorized_user_file(token_filepath, SCOPES)
 
-    # If there are no valid credentials, authenticate again
-    if not token_credentials or not token_credentials.valid:
+    # Refresh or re-authenticate if needed
+    if token_credentials and token_credentials.valid:
+        # If the token is valid, return the authorized service
+        return build('calendar', 'v3', credentials=token_credentials)
+    elif token_credentials and token_credentials.expired and token_credentials.refresh_token:
+        # Try to refresh the token if it's expired
         try:
-            if token_credentials and token_credentials.expired and token_credentials.refresh_token:
-                token_credentials.refresh(Request())
+            token_credentials.refresh(Request())
         except google.auth.exceptions.RefreshError:
-            os.remove(token_filepath)
+            os.remove(token_filepath)  # Clear invalid token
 
-        if not credentials_filepath:
-            raise ValueError("The credentials file path was not defined. Unable to continue.")
+    # Run authentication flow if no valid credentials are available
+    if not token_credentials or not token_credentials.valid:
         if not os.path.exists(credentials_filepath):
             raise FileNotFoundError(f"The credentials file at \"{credentials_filepath}\" does not exist.")
-
         flow = InstalledAppFlow.from_client_secrets_file(credentials_filepath, SCOPES)
-        if not flow:
-            raise ValueError("The flow is invalid or null.")
-
         token_credentials = flow.run_local_server(port=0)
 
-        # Save the credentials for the next run
+        # Save the refreshed or new credentials
         with open(token_filepath, 'w') as token:
             token.write(token_credentials.to_json())
 
