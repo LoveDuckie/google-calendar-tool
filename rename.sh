@@ -27,8 +27,8 @@ rename_files_and_directories() {
 
 # Function to replace text within files
 replace_text_in_files() {
-  find . -type f -exec sed -i '' "s/google_calendar_tool/$new_project_name/g" {} \;
-  return 0
+    find . -type f -exec sed -i '' "s/google_calendar_tool/$new_project_name/g" {} \;
+    return 0
 }
 
 # Check if a new project name is provided as a command-line argument
